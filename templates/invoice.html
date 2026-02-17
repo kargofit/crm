@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice #{{ order.id }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3rem;
+        }
+
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .invoice-details {
+            text-align: right;
+        }
+
+        .bill-to {
+            margin-bottom: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+        }
+
+        th {
+            text-align: left;
+            border-bottom: 2px solid var(--border);
+            padding: 0.75rem 0;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        td {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .totals {
+            margin-left: auto;
+            width: 300px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+        }
+
+        .grand-total {
+            font-weight: 700;
+            border-top: 2px solid var(--border);
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            font-size: 1.125rem;
+        }
+
+        .actions {
+            margin-top: 3rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        @media print {
+            body {
+                padding: 0;
+            }
+
+            .actions {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div>
+            <div class="brand">BikeStore</div>
+            <div style="color: var(--text-muted); margin-top: 0.5rem;">
+                123 Industrial Area<br>
+                City, State 123456<br>
+                GSTIN: 27ABCDE1234F1Z5
+            </div>
+        </div>
+        <div class="invoice-details">
+            <h1 style="font-size: 1.5rem; margin-bottom: 0.5rem;">INVOICE</h1>
+            <div><strong>Invoice #:</strong> {{ order.id }}</div>
+            <div><strong>Date:</strong> {{ order.order_date.strftime('%Y-%m-%d') if order.order_date else 'N/A' }}</div>
+            <div><strong>Status:</strong> {{ order.status }}</div>
+        </div>
+    </div>
+
+    <div class="bill-to">
+        <h3 style="font-size: 0.875rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem;">
+            Bill To:</h3>
+        <div style="font-weight: 600;">{{ order.name }}</div>
+        <div>{{ order.street or '' }}</div>
+        <div>{{ order.city or '' }}, {{ order.state or '' }} {{ order.pincode or '' }}</div>
+        <div>Phone: {{ order.phone or 'N/A' }}</div>
+        {% if order.gst %}<div>GST: {{ order.gst }}</div>{% endif %}
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th style="text-align: right;">Qty</th>
+                <th style="text-align: right;">Rate</th>
+                <th style="text-align: right;">Tax</th>
+                <th style="text-align: right;">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>
+                    <div style="font-weight: 500;">{{ item.brand }} {{ item.item_code }}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">{{ item.category or '' }}</div>
+                </td>
+                <td style="text-align: right;">{{ item.quantity }}</td>
+                <td style="text-align: right;">{{ "%.2f"|format(item.unit_price) }}</td>
+                <td style="text-align: right;">{{ "%.2f"|format(item.tax_amount) }}</td>
+                <td style="text-align: right;">{{ "%.2f"|format(item.line_total) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <div class="total-row">
+            <span>Subtotal:</span>
+            <span>
+                {% set subtotal = items | sum(attribute='line_total') - items | sum(attribute='tax_amount') %}
+                ₹{{ "%.2f"|format(subtotal) }}
+            </span>
+        </div>
+        <div class="total-row">
+            <span>Tax (18%):</span>
+            <span>₹{{ "%.2f"|format(items | sum(attribute='tax_amount')) }}</span>
+        </div>
+        <div class="total-row">
+            <span>Delivery:</span>
+            <span>₹{{ "%.2f"|format(order.delivery_charges) }}</span>
+        </div>
+        <div class="total-row grand-total">
+            <span>Total:</span>
+            <span>₹{{ "%.2f"|format(order.total_amount) }}</span>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button onclick="window.print()" class="btn">Print / PDF</button>
+        <a href="/orders" class="btn btn-secondary">Back to Orders</a>
+    </div>
+</body>
+
+</html>

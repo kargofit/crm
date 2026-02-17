@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<header>
+    <h1>Dashboard</h1>
+</header>
+
+<div class="card">
+    <h2>Welcome Back!</h2>
+    <p style="color: var(--text-muted); margin-top: 0.5rem;">
+        Manage your spare parts inventory, customers, and orders from this central hub.
+    </p>
+
+    <div
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+        <a href="/orders/create" class="card"
+            style="text-decoration: none; border: 1px solid var(--primary); background: #eff6ff;">
+            <div style="display: flex; align-items: center; gap: 1rem; color: var(--primary);">
+                <i data-lucide="plus-circle" size="32"></i>
+                <span style="font-weight: 600; font-size: 1.1rem;">New Order</span>
+            </div>
+        </a>
+
+        <a href="/products" class="card" style="text-decoration: none; color: inherit;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <i data-lucide="package" size="32" color="var(--text-muted)"></i>
+                <div>
+                    <div style="font-weight: 600;">Inventory</div>
+                    <div style="font-size: 0.875rem; color: var(--text-muted);">Manage Products</div>
+                </div>
+            </div>
+        </a>
+
+        <a href="/customers" class="card" style="text-decoration: none; color: inherit;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <i data-lucide="users" size="32" color="var(--text-muted)"></i>
+                <div>
+                    <div style="font-weight: 600;">CRM</div>
+                    <div style="font-size: 0.875rem; color: var(--text-muted);">Manage Customers</div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,814 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<header style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+    <h1>Products</h1>
+
+    <div style="flex: 1; max-width: 400px; position: relative;">
+        <input type="text" id="searchInput" placeholder="Search products..."
+            style="width: 100%; padding: 0.5rem 1rem 0.5rem 2.5rem; border: 1px solid var(--border); border-radius: 0.375rem;">
+        <i data-lucide="search"
+            style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 1rem; height: 1rem;"></i>
+    </div>
+
+    <div style="display: flex; gap: 1rem; align-items: center;">
+        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; cursor: pointer;">
+            <input type="checkbox" id="showArchivedToggle" onchange="toggleArchived()" style="cursor: pointer;">
+            <span>Show Archived</span>
+        </label>
+        <button class="btn btn-primary" onclick="openModal()">
+            <i data-lucide="plus"></i> Add Product
+        </button>
+        <div style="display: inline-block;">
+            <input type="file" id="csvFile" accept=".csv" style="display: none;" onchange="handleFileUpload(this)">
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('csvFile').click()">
+                <i data-lucide="upload"></i> Bulk Upload
+            </button>
+        </div>
+    </div>
+</header>
+
+<div class="card">
+    <div class="table-container">
+        <table id="productsTable">
+            <thead>
+                <tr>
+                    <th style="cursor: pointer; user-select: none;" onclick="sortBy('brand')">
+                        Brand <span id="sort-brand"></span>
+                    </th>
+                    <th style="cursor: pointer; user-select: none;" onclick="sortBy('category')">
+                        Category <span id="sort-category"></span>
+                    </th>
+                    <th style="cursor: pointer; user-select: none;" onclick="sortBy('item_name')">
+                        Item Name <span id="sort-item_name"></span>
+                    </th>
+                    <th style="cursor: pointer; user-select: none;" onclick="sortBy('mrp')">
+                        MRP <span id="sort-mrp"></span>
+                    </th>
+                    <th style="cursor: pointer; user-select: none;" onclick="sortBy('cost')">
+                        Cost Price <span id="sort-cost"></span>
+                    </th>
+                    <th style="cursor: pointer; user-select: none;" onclick="sortBy('sale_price')">
+                        Sale Price <span id="sort-sale_price"></span>
+                    </th>
+                    <th>Actions</th>
+                </tr>
+                <!-- Filter Row -->
+                <tr style="background-color: var(--bg-secondary);">
+                    <th>
+                        <input type="text" id="brandFilter" placeholder="Filter..."
+                            style="width: 100%; padding: 0.25rem; border: 1px solid var(--border); border-radius: 0.25rem; font-size: 0.75rem;">
+                    </th>
+                    <th>
+                        <input type="text" id="categoryFilter" placeholder="Filter..."
+                            style="width: 100%; padding: 0.25rem; border: 1px solid var(--border); border-radius: 0.25rem; font-size: 0.75rem;">
+                    </th>
+                    <th colspan="4"></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Populated by JS -->
+            </tbody>
+        </table>
+    </div>
+    <!-- Pagination Controls -->
+    <div id="paginationControls"
+        style="padding: 1rem; display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem; border-top: 1px solid var(--border);">
+        <!-- Populated by JS -->
+    </div>
+</div>
+
+<!-- Modal -->
+<div id="productModal" class="modal">
+    <div class="modal-content">
+        <h2 style="margin-bottom: 1.5rem;" id="modalTitle">Add Product</h2>
+        <form id="productForm">
+            <input type="hidden" id="productId">
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label>Item Name</label>
+                    <input type="text" id="item_name">
+                    <small style="color: var(--text-muted); font-size: 0.75rem;">Auto-generated: Brand + Category + AKA
+                        + Details + (Bikes)</small>
+                </div>
+                <div class="form-group">
+                    <label>Also Known As</label>
+                    <input type="text" id="also_known_as">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label>Brand</label>
+                    <select id="brand">
+                        <option value="">Select Brand</option>
+                        {% for brand in brands %}
+                        <option value="{{ brand }}">{{ brand }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="category">
+                        <option value="">Select Category</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat }}">{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label>Brand Type</label>
+                    <select id="brand_type">
+                        <option value="">Select Brand Type</option>
+                        <option value="OES">OES</option>
+                        <option value="OEM">OEM</option>
+
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Compatible Bikes</label>
+                    <select id="compatible_bikes" multiple>
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            </div>
+            <div class="form-group">
+                <label>Details</label>
+                <input type="text" id="description" />
+            </div>
+
+            <!-- Pricing Section -->
+            <div
+                style="margin-top: 1.5rem; margin-bottom: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-main);">Pricing
+                </h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Cost Price</label>
+                        <input type="number" step="0.01" id="cost_price">
+                    </div>
+                    <div class="form-group">
+                        <label>List Price</label>
+                        <input type="number" step="0.01" id="list_price">
+                    </div>
+                    <div class="form-group">
+                        <label>Sale Price <span id="discount_display"
+                                style="color: var(--success); font-weight: 600; margin-left: 0.5rem; font-size: 0.75rem;"></span></label>
+                        <input type="number" step="0.01" id="sale_price">
+                    </div>
+                    <div class="form-group">
+                        <label>MRP</label>
+                        <input type="number" step="0.01" id="mrp">
+                    </div>
+                </div>
+            </div>
+            <!-- Pricing Section -->
+            <div
+                style="margin-top: 1.5rem; margin-bottom: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-main);">Other
+                    Details
+                </h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>OEM Part No.</label>
+                        <input type="text" id="oem_part_no">
+                    </div>
+                    <div class="form-group">
+                        <label>HSN Code</label>
+                        <input type="text" id="hsn_code">
+                    </div>
+                    <div class="form-group">
+                        <label>Item Code</label>
+                        <input type="text" id="item_code">
+                    </div>
+                    <div class="form-group">
+                        <label>Pack Size</label>
+                        <input type="text" id="pack_size">
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Product</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Upload Mapping Modal -->
+<div id="uploadMappingModal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+        <h2 style="margin-bottom: 1.5rem;">Map CSV Columns</h2>
+        <p style="margin-bottom: 1rem; color: var(--text-muted);">
+            Map the columns from your CSV file to the product fields. Required fields are marked with *.
+        </p>
+
+        <form id="mappingForm">
+            <input type="hidden" id="uploadFilename">
+
+            <div id="mappingContainer"
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; max-height: 60vh; overflow-y: auto; padding-right: 0.5rem;">
+                <!-- Mapping items generated by JS -->
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeMappingModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Import Products</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/slim-select/2.8.2/slimselect.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/slim-select/2.8.2/slimselect.min.js"></script>
+<script>
+    let categorySelect;
+    let bikeSelect;
+    let brandSelect;
+
+    const modal = document.getElementById('productModal');
+    const form = document.getElementById('productForm');
+
+    async function populateBikeDropdown() {
+        try {
+            const response = await fetch('/api/bikes');
+            const data = await response.json();
+            const select = document.getElementById('compatible_bikes');
+
+            // Clear existing options
+            select.innerHTML = '';
+
+            for (const [brand, bikes] of Object.entries(data)) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = brand;
+
+                bikes.sort().forEach(bikeName => {
+                    const option = document.createElement('option');
+                    option.value = bikeName;
+                    option.textContent = bikeName;
+                    optgroup.appendChild(option);
+                });
+
+                select.appendChild(optgroup);
+            }
+
+            // Initialize SlimSelect for bikes after populating options
+            if (bikeSelect) {
+                bikeSelect.destroy();
+            }
+
+            bikeSelect = new SlimSelect({
+                select: '#compatible_bikes',
+                settings: {
+                    placeholderText: 'Select Compatible Bikes',
+                    closeOnSelect: false,
+                    showSearch: true,
+                    searchPlaceholder: 'Search Bikes...'
+                },
+                events: {
+                    afterChange: () => generateItemName()
+                }
+            });
+
+        } catch (error) {
+            console.error('Error fetching bikes:', error);
+        }
+    }
+
+    function openModal(product = null) {
+        modal.classList.add('active');
+        if (product) {
+            document.getElementById('modalTitle').textContent = 'Edit Product';
+            document.getElementById('productId').value = product.id;
+            document.getElementById('brand').value = product.brand;
+            if (brandSelect) brandSelect.setSelected(product.brand);
+
+            document.getElementById('item_code').value = product.item_code;
+            document.getElementById('category').value = product.category;
+            if (categorySelect) categorySelect.setSelected(product.category);
+            document.getElementById('pack_size').value = product.pack_size;
+            document.getElementById('cost_price').value = product.cost_price;
+            document.getElementById('sale_price').value = product.sale_price;
+            document.getElementById('mrp').value = product.mrp;
+            document.getElementById('brand_type').value = product.brand_type;
+
+            const selectedValues = product.compatible_bikes || [];
+            if (bikeSelect) {
+                bikeSelect.setSelected(selectedValues);
+            } else {
+                const select = document.getElementById('compatible_bikes');
+                Array.from(select.options).forEach(opt => opt.selected = selectedValues.includes(opt.value));
+            }
+
+            document.getElementById('item_name').value = product.item_name;
+            document.getElementById('also_known_as').value = product.also_known_as;
+            document.getElementById('oem_part_no').value = product.oem_part_no;
+            document.getElementById('list_price').value = product.list_price;
+            document.getElementById('hsn_code').value = product.hsn_code;
+            document.getElementById('description').value = product.description || '';
+
+            calculateDiscount();
+        } else {
+            document.getElementById('modalTitle').textContent = 'Add Product';
+            form.reset();
+            document.getElementById('productId').value = '';
+            if (brandSelect) brandSelect.setSelected('');
+            if (categorySelect) categorySelect.setSelected('');
+
+            if (bikeSelect) bikeSelect.setSelected([]);
+
+            calculateDiscount();
+        }
+    }
+
+
+    function closeModal() {
+        modal.classList.remove('active');
+    }
+
+    let currentPage = 1;
+    let currentQuery = '';
+    let currentSortBy = 'id';
+    let currentSortOrder = 'desc';
+    let currentBrandFilter = '';
+    let currentCategoryFilter = '';
+
+    async function loadProducts(query = '', page = 1) {
+        currentQuery = query;
+        currentPage = page;
+
+        const showArchived = document.getElementById('showArchivedToggle').checked;
+        const brandFilter = document.getElementById('brandFilter').value.trim();
+        const categoryFilter = document.getElementById('categoryFilter').value.trim();
+
+        currentBrandFilter = brandFilter;
+        currentCategoryFilter = categoryFilter;
+
+        const params = new URLSearchParams({
+            search: query,
+            page: page,
+            show_archived: showArchived,
+            sort_by: currentSortBy,
+            sort_order: currentSortOrder
+        });
+
+        if (brandFilter) params.append('brand_filter', brandFilter);
+        if (categoryFilter) params.append('category_filter', categoryFilter);
+
+        const url = `/api/products?${params.toString()}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const products = data.items || [];
+
+        updateSortIndicators();
+
+        const tbody = document.querySelector('#productsTable tbody');
+
+        if (products.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">No products found</td></tr>';
+            renderPagination(0, 1);
+            return;
+        }
+
+        tbody.innerHTML = products.map(p => {
+            const isArchived = p.is_archived;
+            const rowStyle = isArchived ? 'opacity: 0.6; background-color: var(--bg-secondary);' : '';
+            const archiveBtn = isArchived
+                ? `<button class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" onclick="unarchiveProduct(${p.id})" title="Unarchive">
+                       <i data-lucide="archive-restore" size="16"></i>
+                   </button>`
+                : `<button class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" onclick="archiveProduct(${p.id})" title="Archive">
+                       <i data-lucide="archive" size="16"></i>
+                   </button>`;
+
+            return `
+            <tr style="${rowStyle}">
+                <td>${p.brand}</td>
+                <td>${p.category}</td>
+                <td>${p.item_name}${isArchived ? ' <span style="color: var(--text-muted); font-size: 0.75rem;">(Archived)</span>' : ''}</td>
+                <td>₹${p.mrp}</td>
+                <td>₹${p.cost_price}</td>
+                <td>₹${p.sale_price}</td>
+                <td>
+                    <div style="display: flex; gap: 0.25rem;">
+                        <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" onclick='openModal(${JSON.stringify(p).replace(/'/g, "&#39;")})'>
+                            <i data-lucide="edit-2" size="16"></i>
+                        </button>
+                        ${archiveBtn}
+                    </div>
+                </td>
+            </tr>
+        `;
+        }).join('');
+        lucide.createIcons();
+
+        renderPagination(data.pages, data.current_page);
+    }
+
+    function renderPagination(totalPages, currentPage) {
+        const controls = document.getElementById('paginationControls');
+        controls.innerHTML = '';
+
+        if (totalPages <= 1) return;
+
+        // Previous Button
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'btn btn-secondary';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = () => loadProducts(currentQuery, currentPage - 1);
+        prevBtn.innerHTML = '<i data-lucide="chevron-left" style="width: 1rem; height: 1rem;"></i>';
+        controls.appendChild(prevBtn);
+
+        // Page Info
+        const info = document.createElement('span');
+        info.textContent = `Page ${currentPage} of ${totalPages}`;
+        info.style.margin = '0 0.5rem';
+        info.style.fontSize = '0.875rem';
+        info.style.color = 'var(--text-muted)';
+        controls.appendChild(info);
+
+        // Next Button
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'btn btn-secondary';
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.onclick = () => loadProducts(currentQuery, currentPage + 1);
+        nextBtn.innerHTML = '<i data-lucide="chevron-right" style="width: 1rem; height: 1rem;"></i>';
+        controls.appendChild(nextBtn);
+
+        lucide.createIcons();
+    }
+
+    let searchTimeout;
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            loadProducts(e.target.value.trim(), 1); // Reset to page 1 on new search
+        }, 300);
+    });
+
+    // Archive/Unarchive functions
+    async function archiveProduct(productId) {
+        if (!confirm('Are you sure you want to archive this product?')) return;
+
+        try {
+            const response = await fetch(`/api/products/${productId}/archive`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_archived: true })
+            });
+
+            if (!response.ok) throw new Error('Failed to archive product');
+
+            loadProducts(currentQuery, currentPage);
+        } catch (error) {
+            alert('Error archiving product: ' + error.message);
+        }
+    }
+
+    async function unarchiveProduct(productId) {
+        try {
+            const response = await fetch(`/api/products/${productId}/archive`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_archived: false })
+            });
+
+            if (!response.ok) throw new Error('Failed to unarchive product');
+
+            loadProducts(currentQuery, currentPage);
+        } catch (error) {
+            alert('Error unarchiving product: ' + error.message);
+        }
+    }
+
+    function toggleArchived() {
+        loadProducts(currentQuery, 1); // Reset to page 1 when toggling
+    }
+
+    // Sorting function
+    function sortBy(column) {
+        if (currentSortBy === column) {
+            // Toggle sort order
+            currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+            // New column, default to descending
+            currentSortBy = column;
+            currentSortOrder = 'desc';
+        }
+        loadProducts(currentQuery, 1); // Reset to page 1 when sorting
+    }
+
+    // Update sort indicators
+    function updateSortIndicators() {
+        // Clear all indicators
+        document.querySelectorAll('[id^="sort-"]').forEach(span => span.textContent = '');
+
+        // Set current indicator
+        const indicator = document.getElementById(`sort-${currentSortBy}`);
+        if (indicator) {
+            indicator.textContent = currentSortOrder === 'asc' ? '↑' : '↓';
+        }
+    }
+
+    // Filter event listeners
+    let filterTimeout;
+    document.getElementById('brandFilter').addEventListener('input', () => {
+        clearTimeout(filterTimeout);
+        filterTimeout = setTimeout(() => {
+            loadProducts(currentQuery, 1); // Reset to page 1 when filtering
+        }, 500);
+    });
+
+    document.getElementById('categoryFilter').addEventListener('input', () => {
+        clearTimeout(filterTimeout);
+        filterTimeout = setTimeout(() => {
+            loadProducts(currentQuery, 1); // Reset to page 1 when filtering
+        }, 500);
+    });
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('productId').value;
+        const data = {
+            brand: document.getElementById('brand').value,
+            item_code: document.getElementById('item_code').value,
+            category: document.getElementById('category').value,
+            pack_size: document.getElementById('pack_size').value,
+            cost_price: parseFloat(document.getElementById('cost_price').value) || 0,
+            sale_price: parseFloat(document.getElementById('sale_price').value) || 0,
+            mrp: parseFloat(document.getElementById('mrp').value) || 0,
+            brand_type: document.getElementById('brand_type').value,
+            compatible_bikes: Array.from(document.getElementById('compatible_bikes').selectedOptions).map(opt => opt.value),
+            item_name: document.getElementById('item_name').value,
+            also_known_as: document.getElementById('also_known_as').value,
+            oem_part_no: document.getElementById('oem_part_no').value,
+            list_price: parseFloat(document.getElementById('list_price').value) || 0,
+            hsn_code: document.getElementById('hsn_code').value,
+            description: document.getElementById('description').value
+        };
+
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/api/products/${id}` : '/api/products';
+
+        await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        closeModal();
+        loadProducts();
+    };
+
+    loadProducts();
+    populateBikeDropdown();
+
+    // Initialize SlimSelect
+    categorySelect = new SlimSelect({
+        select: '#category',
+        settings: {
+            placeholderText: 'Select Category',
+            allowDeselect: true,
+            showSearch: true,
+            searchPlaceholder: 'Search Category...'
+        },
+        events: {
+            afterChange: () => generateItemName()
+        }
+    });
+
+
+
+    brandSelect = new SlimSelect({
+        select: '#brand',
+        settings: {
+            placeholderText: 'Select Brand',
+            allowDeselect: true
+        },
+        events: {
+            afterChange: () => generateItemName()
+        }
+    });
+
+    // Auto-generate Item Name
+    function generateItemName() {
+        // If we are editing, we might not want to overwrite if the user has custom changes, 
+        // but the requirement is "automatically becoming format", so we will enforce it.
+        const brand = document.getElementById('brand').value || '';
+        const category = document.getElementById('category').value || '';
+        const aka = document.getElementById('also_known_as').value || '';
+        const description = document.getElementById('description').value || '';
+
+        let bikes = '';
+        if (bikeSelect) {
+            const selected = bikeSelect.getSelected();
+            if (selected && selected.length > 0) {
+                bikes = `(${selected.join(', ')})`;
+            }
+        } else {
+            // Fallback if slim select not ready
+            const selectedOpts = Array.from(document.getElementById('compatible_bikes').selectedOptions).map(o => o.value);
+            if (selectedOpts.length > 0) bikes = `(${selectedOpts.join(', ')})`;
+        }
+
+        // Format: $Brand $Category $Also Known As ($Compatible bikes)
+        let nameParts = [brand, category, aka, description].filter(p => p.trim() !== '');
+
+        // Construct basic name
+        let fullName = nameParts.join(' ');
+
+        // Append bikes if exists
+        if (bikes) {
+            fullName += ' ' + bikes;
+        }
+
+        document.getElementById('item_name').value = fullName;
+    }
+
+    // Add listeners
+    document.getElementById('brand').addEventListener('change', generateItemName);
+    document.getElementById('category').addEventListener('change', generateItemName);
+    document.getElementById('also_known_as').addEventListener('input', generateItemName);
+    document.getElementById('description').addEventListener('input', generateItemName);
+    document.getElementById('compatible_bikes').addEventListener('change', generateItemName);
+
+    // Discount Calculation
+    function calculateDiscount() {
+        const mrp = parseFloat(document.getElementById('mrp').value) || 0;
+        const sale = parseFloat(document.getElementById('sale_price').value) || 0;
+        const display = document.getElementById('discount_display');
+
+        if (mrp > 0 && sale > 0 && mrp >= sale) {
+            const diff = mrp - sale;
+            const percentage = (diff / mrp) * 100;
+            display.textContent = `${percentage.toFixed(1)}% OFF`;
+        } else {
+            display.textContent = '';
+        }
+    }
+
+    document.getElementById('mrp').addEventListener('input', calculateDiscount);
+    document.getElementById('sale_price').addEventListener('input', calculateDiscount);
+
+    // --- Bulk Upload & Mapping Logic ---
+    const mappingModal = document.getElementById('uploadMappingModal');
+    let currentCsvHeaders = [];
+
+    const mapFields = [
+        { key: 'id', label: 'Product ID (Update existing)', required: false },
+        { key: 'brand', label: 'Brand', required: true },
+        { key: 'item_code', label: 'Item Code', required: true },
+        { key: 'category', label: 'Category', required: true },
+        { key: 'item_name', label: 'Item Name', required: true },
+        { key: 'mrp', label: 'MRP', required: true },
+        { key: 'cost', label: 'Cost Price', required: true },
+        { key: 'sale_price', label: 'Sale Price', required: false },
+        { key: 'list_price', label: 'List Price', required: false },
+        { key: 'pack_size', label: 'Pack Size', required: false },
+        { key: 'brand_type', label: 'Brand Type', required: false },
+        { key: 'also_known_as', label: 'Also Known As', required: false },
+        { key: 'oem_part_no', label: 'OEM Part No', required: false },
+        { key: 'hsn_code', label: 'HSN Code', required: false },
+        { key: 'description', label: 'Description', required: false }
+    ];
+
+    async function handleFileUpload(input) {
+        if (!input.files || input.files.length === 0) return;
+
+        const file = input.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('/api/products/analyze_upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'Upload failed');
+            }
+
+            const data = await response.json();
+            document.getElementById('uploadFilename').value = data.filename;
+            currentCsvHeaders = data.headers;
+
+            renderMappingUI();
+            mappingModal.classList.add('active');
+
+        } catch (error) {
+            alert('Error uploading file: ' + error.message);
+        } finally {
+            input.value = ''; // Reset input
+        }
+    }
+
+    function closeMappingModal() {
+        mappingModal.classList.remove('active');
+    }
+
+    function renderMappingUI() {
+        const container = document.getElementById('mappingContainer');
+        container.innerHTML = '';
+
+        mapFields.forEach(field => {
+            const div = document.createElement('div');
+            div.className = 'form-group';
+            div.style.marginBottom = '0.5rem';
+
+            const label = document.createElement('label');
+            label.textContent = field.label + (field.required ? ' *' : '');
+            if (field.required) label.style.fontWeight = 'bold';
+
+            const select = document.createElement('select');
+            select.name = field.key;
+            select.required = field.required;
+
+            // Default option
+            const defaultOpt = document.createElement('option');
+            defaultOpt.value = '';
+            defaultOpt.textContent = '-- Ignore / Not Mapped --';
+            select.appendChild(defaultOpt);
+
+            // Header options
+            currentCsvHeaders.forEach(header => {
+                const opt = document.createElement('option');
+                opt.value = header;
+                opt.textContent = header;
+                select.appendChild(opt);
+            });
+
+            // Auto-select logic (simple fuzzy match)
+            const match = currentCsvHeaders.find(h =>
+                h.toLowerCase().replace(/_/g, '').replace(/ /g, '') === field.key.toLowerCase().replace(/_/g, '') ||
+                h.toLowerCase().replace(/_/g, '').replace(/ /g, '') === field.label.toLowerCase().replace(/_/g, '').replace(/ /g, '')
+            );
+
+            if (match) {
+                select.value = match;
+            } else {
+                // Also try mapping specific known variations if needed
+                if (field.key === 'cost' && currentCsvHeaders.some(h => ['cost price', 'cost_price', 'cp'].includes(h.toLowerCase()))) {
+                    select.value = currentCsvHeaders.find(h => ['cost price', 'cost_price', 'cp'].includes(h.toLowerCase()));
+                }
+                if (field.key === 'sale_price' && currentCsvHeaders.some(h => ['selling price', 'sale price', 'sp'].includes(h.toLowerCase()))) {
+                    select.value = currentCsvHeaders.find(h => ['selling price', 'sale price', 'sp'].includes(h.toLowerCase()));
+                }
+            }
+
+            div.appendChild(label);
+            div.appendChild(select);
+            container.appendChild(div);
+        });
+    }
+
+    document.getElementById('mappingForm').onsubmit = async (e) => {
+        e.preventDefault();
+
+        const filename = document.getElementById('uploadFilename').value;
+        const mapping = {};
+        const selects = document.querySelectorAll('#mappingContainer select');
+
+        selects.forEach(select => {
+            if (select.value) {
+                mapping[select.name] = select.value;
+            }
+        });
+
+        try {
+            const response = await fetch('/api/products/bulk_import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: filename,
+                    mapping: mapping
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Import failed');
+            }
+
+            alert(result.message);
+            closeMappingModal();
+            loadProducts(); // Reload table
+
+        } catch (error) {
+            alert('Error importing products: ' + error.message);
+        }
+    };
+</script>
+{% endblock %}

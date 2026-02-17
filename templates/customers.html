@@ -1,0 +1,474 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<header style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+    <h1>Customers</h1>
+
+    <div style="flex: 1; max-width: 400px; position: relative;">
+        <input type="text" id="searchInput" placeholder="Search customers..."
+            style="width: 100%; padding: 0.5rem 1rem 0.5rem 2.5rem; border: 1px solid var(--border); border-radius: 0.375rem;">
+        <i data-lucide="search"
+            style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 1rem; height: 1rem;"></i>
+    </div>
+
+    <div style="display: flex; gap: 1rem; align-items: center;">
+        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; cursor: pointer;">
+            <input type="checkbox" id="showArchivedToggle" onchange="toggleArchived()" style="cursor: pointer;">
+            <span>Show Archived</span>
+        </label>
+        <button class="btn btn-primary" onclick="openModal()">
+            <i data-lucide="plus"></i> Add Customer
+        </button>
+        <div style="display: inline-block;">
+            <input type="file" id="csvFile" accept=".csv" style="display: none;" onchange="handleFileUpload(this)">
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('csvFile').click()">
+                <i data-lucide="upload"></i> Bulk Upload
+            </button>
+        </div>
+    </div>
+</header>
+
+<div class="card">
+    <div class="table-container">
+        <table id="customersTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>City / State</th>
+                    <th>Type</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody><!-- JS --></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="customerModal" class="modal">
+    <div class="modal-content">
+        <h2 style="margin-bottom: 1.5rem;" id="modalTitle">Add Customer</h2>
+        <form id="customerForm">
+            <input type="hidden" id="customerId">
+
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="name" required>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" id="phone" required>
+                </div>
+                <div class="form-group">
+                    <label>GST</label>
+                    <input type="text" id="gst">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label>City</label>
+                    <select id="city">
+                        <option value="Gurgaon">Gurgaon</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>State</label>
+                    <input type="text" id="state" value="Haryana">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label>Pincode</label>
+                    <input type="text" id="pincode">
+                </div>
+                <div class="form-group">
+                    <label>Map Location (URL)</label>
+                    <input type="text" id="map_location">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label>Owner Name</label>
+                    <input type="text" id="owner_name">
+                </div>
+                <div class="form-group">
+                    <label>Customer Size</label>
+                    <select id="customer_size">
+                        <option value="Small">Small</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Large">Large</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Address / Street</label>
+                <input type="text" id="street">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label>Customer Type</label>
+                    <select id="customer_type">
+                        <option value="Retailer">Retailer</option>
+                        <option value="Garage">Garage</option>
+                        <option value="Service Center">Service Center</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Contact Type</label>
+                    <select id="contact_type">
+                        <option value="Customer">Customer</option>
+                        <option value="Supplier">Supplier</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Customer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Upload Mapping Modal -->
+<div id="uploadMappingModal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+        <h2 style="margin-bottom: 1.5rem;">Map CSV Columns</h2>
+        <p style="margin-bottom: 1rem; color: var(--text-muted);">
+            Map the columns from your CSV file to the customer fields. Required fields are marked with *.
+        </p>
+
+        <form id="mappingForm">
+            <input type="hidden" id="uploadFilename">
+
+            <div id="mappingContainer"
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; max-height: 60vh; overflow-y: auto; padding-right: 0.5rem;">
+                <!-- Mapping items generated by JS -->
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeMappingModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Import Customers</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const modal = document.getElementById('customerModal');
+    const form = document.getElementById('customerForm');
+
+    function openModal(customer = null) {
+        modal.classList.add('active');
+        if (customer) {
+            document.getElementById('modalTitle').textContent = 'Edit Customer';
+            document.getElementById('customerId').value = customer.id;
+            document.getElementById('name').value = customer.name;
+            document.getElementById('phone').value = customer.phone;
+            document.getElementById('gst').value = customer.gst;
+            document.getElementById('city').value = customer.city;
+            document.getElementById('state').value = customer.state;
+            document.getElementById('pincode').value = customer.pincode || '';
+            document.getElementById('map_location').value = customer.map_location || '';
+            document.getElementById('owner_name').value = customer.owner_name || '';
+            document.getElementById('street').value = customer.street;
+            document.getElementById('customer_type').value = customer.customer_type;
+            document.getElementById('customer_size').value = customer.customer_size || 'Small';
+            document.getElementById('contact_type').value = customer.contact_type;
+        } else {
+            document.getElementById('modalTitle').textContent = 'Add Customer';
+            form.reset();
+            document.getElementById('customerId').value = '';
+            // Set defaults
+            document.getElementById('city').value = 'Gurgaon';
+            document.getElementById('state').value = 'Haryana';
+        }
+    }
+
+    function closeModal() {
+        modal.classList.remove('active');
+    }
+
+    async function loadCustomers(query = '') {
+        const showArchived = document.getElementById('showArchivedToggle').checked;
+        const params = new URLSearchParams({
+            search: query,
+            show_archived: showArchived
+        });
+
+        const res = await fetch(`/api/customers?${params.toString()}`);
+        const customers = await res.json();
+        const tbody = document.querySelector('#customersTable tbody');
+
+        if (customers.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">No customers found</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = customers.map(c => {
+            const isArchived = c.is_archived;
+            const rowStyle = isArchived ? 'opacity: 0.6; background-color: var(--bg-secondary);' : '';
+            const archiveBtn = isArchived
+                ? `<button class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" onclick="unarchiveCustomer(${c.id})" title="Unarchive">
+                       <i data-lucide="archive-restore" size="16"></i>
+                   </button>`
+                : `<button class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" onclick="archiveCustomer(${c.id})" title="Archive">
+                       <i data-lucide="archive" size="16"></i>
+                   </button>`;
+
+            return `
+            <tr style="${rowStyle}">
+                <td>
+                    <div style="font-weight: 500;">${c.name}${isArchived ? ' <span style="color: var(--text-muted); font-size: 0.75rem;">(Archived)</span>' : ''}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">${c.street || ''}</div>
+                </td>
+                <td>${c.phone || '-'}</td>
+                <td>${c.city || ''}, ${c.state || ''}</td>
+                <td><span class="badge badge-draft">${c.customer_type}</span></td>
+                <td>
+                    <div style="display: flex; gap: 0.25rem;">
+                        <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" onclick='openModal(${JSON.stringify(c)})'>
+                            <i data-lucide="edit-2" size="16"></i>
+                        </button>
+                        ${archiveBtn}
+                    </div>
+                </td>
+            </tr>
+        `;
+        }).join('');
+        lucide.createIcons();
+    }
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('customerId').value;
+        const data = {
+            name: document.getElementById('name').value,
+            phone: document.getElementById('phone').value,
+            gst: document.getElementById('gst').value,
+            city: document.getElementById('city').value,
+            state: document.getElementById('state').value,
+            pincode: document.getElementById('pincode').value,
+            map_location: document.getElementById('map_location').value,
+            street: document.getElementById('street').value,
+            owner_name: document.getElementById('owner_name').value,
+            customer_type: document.getElementById('customer_type').value,
+            customer_size: document.getElementById('customer_size').value,
+            contact_type: document.getElementById('contact_type').value,
+        };
+
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/api/customers/${id}` : '/api/customers';
+
+        await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        closeModal();
+        loadCustomers();
+    };
+
+    loadCustomers();
+
+    // Search functionality
+    let searchTimeout;
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            loadCustomers(e.target.value.trim());
+        }, 300);
+    });
+
+    // Archive/Unarchive functions
+    async function archiveCustomer(customerId) {
+        if (!confirm('Are you sure you want to archive this customer?')) return;
+
+        try {
+            const response = await fetch(`/api/customers/${customerId}/archive`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_archived: true })
+            });
+
+            if (!response.ok) throw new Error('Failed to archive customer');
+
+            loadCustomers(document.getElementById('searchInput').value.trim());
+        } catch (error) {
+            alert('Error archiving customer: ' + error.message);
+        }
+    }
+
+    async function unarchiveCustomer(customerId) {
+        try {
+            const response = await fetch(`/api/customers/${customerId}/archive`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_archived: false })
+            });
+
+            if (!response.ok) throw new Error('Failed to unarchive customer');
+
+            loadCustomers(document.getElementById('searchInput').value.trim());
+        } catch (error) {
+            alert('Error unarchiving customer: ' + error.message);
+        }
+    }
+
+    function toggleArchived() {
+        loadCustomers(document.getElementById('searchInput').value.trim());
+    }
+
+    // --- Bulk Upload & Mapping Logic ---
+    const mappingModal = document.getElementById('uploadMappingModal');
+    let currentCsvHeaders = [];
+
+    const mapFields = [
+        { key: 'id', label: 'Customer ID (Update existing)', required: false },
+        { key: 'name', label: 'Name', required: true },
+        { key: 'phone', label: 'Phone', required: false },
+        { key: 'city', label: 'City', required: false },
+        { key: 'state', label: 'State', required: false },
+        { key: 'pincode', label: 'Pincode', required: false },
+        { key: 'street', label: 'Street/Address', required: false },
+        { key: 'owner_name', label: 'Owner Name', required: false },
+        { key: 'customer_type', label: 'Customer Type', required: false },
+        { key: 'customer_size', label: 'Customer Size', required: false },
+        { key: 'contact_type', label: 'Contact Type', required: false },
+        { key: 'gst', label: 'GST', required: false },
+        { key: 'map_location', label: 'Map Location', required: false }
+    ];
+
+    async function handleFileUpload(input) {
+        if (!input.files || input.files.length === 0) return;
+
+        const file = input.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('/api/customers/analyze_upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'Upload failed');
+            }
+
+            const data = await response.json();
+            document.getElementById('uploadFilename').value = data.filename;
+            currentCsvHeaders = data.headers;
+
+            renderMappingUI();
+            mappingModal.classList.add('active');
+
+        } catch (error) {
+            alert('Error uploading file: ' + error.message);
+        } finally {
+            input.value = ''; // Reset input
+        }
+    }
+
+    function closeMappingModal() {
+        mappingModal.classList.remove('active');
+    }
+
+    function renderMappingUI() {
+        const container = document.getElementById('mappingContainer');
+        container.innerHTML = '';
+
+        mapFields.forEach(field => {
+            const div = document.createElement('div');
+            div.className = 'form-group';
+            div.style.marginBottom = '0.5rem';
+
+            const label = document.createElement('label');
+            label.textContent = field.label + (field.required ? ' *' : '');
+            if (field.required) label.style.fontWeight = 'bold';
+
+            const select = document.createElement('select');
+            select.name = field.key;
+            select.required = field.required;
+
+            // Default option
+            const defaultOpt = document.createElement('option');
+            defaultOpt.value = '';
+            defaultOpt.textContent = '-- Ignore / Not Mapped --';
+            select.appendChild(defaultOpt);
+
+            // Header options
+            currentCsvHeaders.forEach(header => {
+                const opt = document.createElement('option');
+                opt.value = header;
+                opt.textContent = header;
+                select.appendChild(opt);
+            });
+
+            // Auto-select logic (simple fuzzy match)
+            const match = currentCsvHeaders.find(h =>
+                h.toLowerCase().replace(/_/g, '').replace(/ /g, '') === field.key.toLowerCase().replace(/_/g, '') ||
+                h.toLowerCase().replace(/_/g, '').replace(/ /g, '') === field.label.toLowerCase().replace(/_/g, '').replace(/ /g, '')
+            );
+
+            if (match) {
+                select.value = match;
+            }
+
+            div.appendChild(label);
+            div.appendChild(select);
+            container.appendChild(div);
+        });
+    }
+
+    document.getElementById('mappingForm').onsubmit = async (e) => {
+        e.preventDefault();
+
+        const filename = document.getElementById('uploadFilename').value;
+        const mapping = {};
+        const selects = document.querySelectorAll('#mappingContainer select');
+
+        selects.forEach(select => {
+            if (select.value) {
+                mapping[select.name] = select.value;
+            }
+        });
+
+        try {
+            const response = await fetch('/api/customers/bulk_import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: filename,
+                    mapping: mapping
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Import failed');
+            }
+
+            alert(result.message);
+            closeMappingModal();
+            loadCustomers(); // Reload table
+
+        } catch (error) {
+            alert('Error importing customers: ' + error.message);
+        }
+    };
+
+</script>
+{% endblock %}

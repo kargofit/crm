@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<header>
+    <h1>Orders</h1>
+    <a href="/orders/create" class="btn btn-primary">
+        <i data-lucide="plus"></i> New Order
+    </a>
+</header>
+
+<div class="card">
+    <div class="table-container">
+        <table id="ordersTable">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody><!-- JS --></tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function loadOrders() {
+        const res = await fetch('/api/orders');
+        const orders = await res.json();
+        const tbody = document.querySelector('#ordersTable tbody');
+
+        tbody.innerHTML = orders.map(o => `
+            <tr>
+                <td>#${o.id}</td>
+                <td>
+                    <div style="font-weight: 500;">${o.customer_name || 'Walk-in'}</div>
+                </td>
+                <td>${new Date(o.order_date).toLocaleDateString()}</td>
+                <td>₹${o.total_amount.toFixed(2)}</td>
+                <td>
+                    <span class="badge ${o.status === 'Invoiced' ? 'badge-invoiced' : 'badge-draft'}">
+                        ${o.status}
+                    </span>
+                </td>
+                <td>
+                    <a href="/orders/${o.id}" class="btn btn-secondary" style="padding: 0.25rem 0.5rem;">
+                        <i data-lucide="eye" size="16"></i> View
+                    </a>
+                </td>
+            </tr>
+        `).join('');
+        lucide.createIcons();
+    }
+    loadOrders();
+</script>
+{% endblock %}

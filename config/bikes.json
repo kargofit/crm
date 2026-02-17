@@ -1,0 +1,634 @@
+{
+    "bike_market_2026": {
+        "Hero": [
+            {
+                "model": "Splendor Plus",
+                "variants": [
+                    "Self Start Drum Alloy",
+                    "Black and Accent",
+                    "XTEC 2.0"
+                ]
+            },
+            {
+                "model": "HF Deluxe",
+                "variants": [
+                    "Kick Start",
+                    "Self Start",
+                    "i3S Technology"
+                ]
+            },
+            {
+                "model": "Passion Plus",
+                "variants": [
+                    "Drum Alloy"
+                ]
+            },
+            {
+                "model": "Glamour",
+                "variants": [
+                    "Drum",
+                    "Disc",
+                    "XTEC"
+                ]
+            },
+            {
+                "model": "Super Splendor",
+                "variants": [
+                    "Drum",
+                    "Disc",
+                    "XTEC"
+                ]
+            },
+            {
+                "model": "Xtreme 125R",
+                "variants": [
+                    "IBS",
+                    "Single Channel ABS",
+                    "Dual Channel ABS (2025)"
+                ]
+            },
+            {
+                "model": "Xtreme 160R 4V",
+                "variants": [
+                    "Standard",
+                    "Connected",
+                    "Premium",
+                    "Combat Edition"
+                ]
+            },
+            {
+                "model": "Xtreme 250R",
+                "variants": [
+                    "Standard"
+                ]
+            },
+            {
+                "model": "XPulse 200 4V",
+                "variants": [
+                    "Standard",
+                    "Pro Edition"
+                ]
+            },
+            {
+                "model": "XPulse 210",
+                "variants": [
+                    "Standard",
+                    "Rally Kit"
+                ]
+            },
+            {
+                "model": "Karizma XMR",
+                "variants": [
+                    "Standard"
+                ]
+            },
+            {
+                "model": "Mavrick 440",
+                "variants": [
+                    "Base",
+                    "Mid",
+                    "Top"
+                ]
+            },
+            {
+                "model": "Destini 125",
+                "variants": [
+                    "LX",
+                    "VX",
+                    "ZX",
+                    "XTEC"
+                ]
+            },
+            {
+                "model": "Xoom",
+                "variants": [
+                    "110 Combat",
+                    "125R",
+                    "160 Adventure"
+                ]
+            },
+            {
+                "model": "Vida V1 (EV)",
+                "variants": [
+                    "Plus",
+                    "Pro",
+                    "V2",
+                    "VX2"
+                ]
+            },
+            {
+                "model": "Duet",
+                "variants": [
+                ]
+            }
+        ],
+        "Honda": [
+            {
+                "model": "Activa",
+                "variants": [
+                    "3G",
+                    "4G",
+                    "5G",
+                    "6G",
+                    "H-Smart (7G Series)"
+                ]
+            },
+            {
+                "model": "Activa 125",
+                "variants": [
+                    "Drum",
+                    "Drum Alloy",
+                    "Disc",
+                    "H-Smart"
+                ]
+            },
+            {
+                "model": "Dio / Dio 125",
+                "variants": [
+                    "Standard",
+                    "Deluxe",
+                    "Smart",
+                    "Repsol Edition"
+                ]
+            },
+            {
+                "model": "Shine 100",
+                "variants": [
+                    "Standard"
+                ]
+            },
+            {
+                "model": "Shine 125",
+                "variants": [
+                    "Drum",
+                    "Disc"
+                ]
+            },
+            {
+                "model": "SP 125",
+                "variants": [
+                    "Drum",
+                    "Disc",
+                    "Sports Edition"
+                ]
+            },
+            {
+                "model": "SP 160",
+                "variants": [
+                    "Single Disc",
+                    "Dual Disc"
+                ]
+            },
+            {
+                "model": "Unicorn",
+                "variants": [
+                    "Standard"
+                ]
+            },
+            {
+                "model": "Hornet 2.0",
+                "variants": [
+                    "Standard",
+                    "Repsol Edition"
+                ]
+            },
+            {
+                "model": "CB200X",
+                "variants": [
+                    "Standard"
+                ]
+            },
+            {
+                "model": "H'ness CB350",
+                "variants": [
+                    "DLX",
+                    "DLX Pro",
+                    "DLX Pro Chrome",
+                    "Legacy Edition"
+                ]
+            },
+            {
+                "model": "CB350RS",
+                "variants": [
+                    "Monotone",
+                    "Dual Tone",
+                    "Hue Edition"
+                ]
+            },
+            {
+                "model": "CB350C (Babylon)",
+                "variants": [
+                    "Standard"
+                ]
+            },
+            {
+                "model": "CB300R / CB300F",
+                "variants": [
+                    "Standard",
+                    "Flex-Fuel"
+                ]
+            },
+            {
+                "model": "NX500",
+                "variants": [
+                    "Standard",
+                    "E-Clutch (2026)"
+                ]
+            },
+            {
+                "model": "Africa Twin / Gold Wing",
+                "variants": [
+                    "DCT",
+                    "Manual"
+                ]
+            },
+            {
+                "model": "Activa EV",
+                "variants": [
+                    "Standard",
+                    "S Edition"
+                ]
+            }
+        ],
+        "Bajaj": [
+            {
+                "model": "Pulsar 125 / NS125",
+                "variants": [
+                    "Neon",
+                    "Carbon Fibre",
+                    "NS"
+                ]
+            },
+            {
+                "model": "Pulsar N125",
+                "variants": [
+                    "LED Disc",
+                    "Bluetooth Edition"
+                ]
+            },
+            {
+                "model": "Pulsar 150",
+                "variants": [
+                    "Single Disc",
+                    "Twin Disc"
+                ]
+            },
+            {
+                "model": "Pulsar N160 / NS160",
+                "variants": [
+                    "Single Channel ABS",
+                    "Dual Channel ABS"
+                ]
+            },
+            {
+                "model": "Pulsar NS200 / RS200",
+                "variants": [
+                    "Standard Dual ABS"
+                ]
+            },
+            {
+                "model": "Pulsar N250",
+                "variants": [
+                    "Standard (USD Forks)"
+                ]
+            },
+            {
+                "model": "Pulsar 220F",
+                "variants": [
+                    "Standard"
+                ]
+            },
+            {
+                "model": "Pulsar NS400Z",
+                "variants": [
+                    "Standard"
+                ]
+            },
+            {
+                "model": "Dominar 250 / 400",
+                "variants": [
+                    "Touring Edition"
+                ]
+            },
+            {
+                "model": "Avenger Street 160 / Cruise 220",
+                "variants": [
+                    "Standard"
+                ]
+            },
+            {
+                "model": "Platina 100 / 110",
+                "variants": [
+                    "Drum",
+                    "Disc",
+                    "ABS"
+                ]
+            },
+            {
+                "model": "CT 110X",
+                "variants": [
+                    "Standard"
+                ]
+            },
+            {
+                "model": "Freedom (CNG)",
+                "variants": [
+                    "Drum",
+                    "Drum LED",
+                    "Disc LED"
+                ]
+            },
+            {
+                "model": "Chetak (EV)",
+                "variants": [
+                    "2901",
+                    "Urbane",
+                    "Premium"
+                ]
+            }
+        ],
+        "TVS": [
+            {
+                "model": "Apache RTR 160 / 160 4V",
+                "variants": [
+                    "Drum",
+                    "Disc",
+                    "Bluetooth",
+                    "Special Edition"
+                ]
+            },
+            {
+                "model": "Apache RTR 180 / 200 4V",
+                "variants": [
+                    "Single Channel ABS",
+                    "Dual Channel ABS"
+                ]
+            },
+            {
+                "model": "Apache RTR 310 / RR 310",
+                "variants": [
+                    "Standard",
+                    "BTO (Built To Order)"
+                ]
+            },
+            {
+                "model": "Raider 125",
+                "variants": [
+                    "Single Seat",
+                    "Split Seat",
+                    "SmartXonnect"
+                ]
+            },
+            {
+                "model": "Ronin",
+                "variants": [
+                    "SS",
+                    "DS",
+                    "TD (Triple Tone)"
+                ]
+            },
+            {
+                "model": "Jupiter / Jupiter 125",
+                "variants": [
+                    "SMW",
+                    "Base",
+                    "ZX",
+                    "ZX SmartXonnect",
+                    "Disc"
+                ]
+            },
+            {
+                "model": "NTORQ 125",
+                "variants": [
+                    "Standard",
+                    "Race Edition",
+                    "Super Squad",
+                    "XT"
+                ]
+            },
+            {
+                "model": "Radeon / Star City Plus",
+                "variants": [
+                    "Drum",
+                    "Disc"
+                ]
+            },
+            {
+                "model": "XL 100 (Moped)",
+                "variants": [
+                    "Comfort",
+                    "Heavy Duty",
+                    "i-Touch"
+                ]
+            },
+            {
+                "model": "iQube (EV)",
+                "variants": [
+                    "Standard (2.2/3.4 kWh)",
+                    "S",
+                    "ST"
+                ]
+            },
+            {
+                "model": "TVS X (EV)",
+                "variants": [
+                    "Standard"
+                ]
+            }
+        ],
+        "Royal_Enfield": [
+            {
+                "model": "Hunter 350",
+                "variants": [
+                    "Retro Factory",
+                    "Metro Dapper",
+                    "Metro Rebel"
+                ]
+            },
+            {
+                "model": "Classic 350",
+                "variants": [
+                    "Heritage",
+                    "Signals",
+                    "Dark",
+                    "Chrome"
+                ]
+            },
+            {
+                "model": "Bullet 350",
+                "variants": [
+                    "Military",
+                    "Standard",
+                    "Black Gold"
+                ]
+            },
+            {
+                "model": "Meteor 350",
+                "variants": [
+                    "Fireball",
+                    "Stellar",
+                    "Supernova",
+                    "Aurora"
+                ]
+            },
+            {
+                "model": "Himalayan 450",
+                "variants": [
+                    "Base",
+                    "Pass",
+                    "Summit",
+                    "Mana Black (2026)"
+                ]
+            },
+            {
+                "model": "Guerrilla 450",
+                "variants": [
+                    "Analogue",
+                    "Dash",
+                    "Flash"
+                ]
+            },
+            {
+                "model": "Interceptor 650",
+                "variants": [
+                    "Standard",
+                    "Custom",
+                    "Special",
+                    "Dark"
+                ]
+            },
+            {
+                "model": "Continental GT 650",
+                "variants": [
+                    "Standard",
+                    "Custom",
+                    "Special",
+                    "Dark"
+                ]
+            },
+            {
+                "model": "Super Meteor 650",
+                "variants": [
+                    "Astral",
+                    "Interstellar",
+                    "Celestial"
+                ]
+            },
+            {
+                "model": "Shotgun 650",
+                "variants": [
+                    "Custom Shed",
+                    "Custom Pro",
+                    "Rough Crafts Edition"
+                ]
+            },
+            {
+                "model": "Classic 650",
+                "variants": [
+                    "Standard",
+                    "125th Anniversary Edition"
+                ]
+            },
+            {
+                "model": "Bullet 650",
+                "variants": [
+                    "Standard (Battleship Blue / Cannon Black)"
+                ]
+            },
+            {
+                "model": "Flying Flea C6 (EV)",
+                "variants": [
+                    "Standard"
+                ]
+            }
+        ],
+        "Suzuki": [
+            {
+                "model": "Access 125",
+                "variants": [
+                    "Drum",
+                    "Disc",
+                    "Ride Connect",
+                    "Special Edition"
+                ]
+            },
+            {
+                "model": "Avenis 125",
+                "variants": [
+                    "Standard",
+                    "Ride Connect Edition"
+                ]
+            },
+            {
+                "model": "Burgman Street 125",
+                "variants": [
+                    "Standard",
+                    "EX"
+                ]
+            },
+            {
+                "model": "Gixxer 155 / SF 155",
+                "variants": [
+                    "Drum",
+                    "Disc",
+                    "SF (Fully Faired)",
+                    "MotoGP Edition"
+                ]
+            },
+            {
+                "model": "Gixxer 250 / SF 250",
+                "variants": [
+                    "Standard",
+                    "SF (Fully Faired)",
+                    "MotoGP Edition"
+                ]
+            },
+            {
+                "model": "V-Strom SX 250",
+                "variants": [
+                    "Standard",
+                    "Adventure Tourer"
+                ]
+            },
+            {
+                "model": "Hayabusa",
+                "variants": [
+                    "Standard",
+                    "Black Edition"
+                ]
+            },
+            {
+                "model": "GSX-S1000",
+                "variants": [
+                    "Standard"
+                ]
+            },
+            {
+                "model": "GSX-8R",
+                "variants": [
+                    "Standard"
+                ]
+            },
+            {
+                "model": "V-Strom 800DE",
+                "variants": [
+                    "Standard",
+                    "Adventure"
+                ]
+            },
+            {
+                "model": "Intruder 150",
+                "variants": [
+                    "Standard",
+                    "FI"
+                ]
+            },
+            {
+                "model": "e-Access (EV)",
+                "variants": [
+                    "Standard"
+                ]
+            }
+        ]
+    }
+}

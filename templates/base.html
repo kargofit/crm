@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Kargo{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body>
+    <div class="mobile-header">
+        <div class="logo-section">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Kargo Logo" class="site-logo">
+        </div>
+        <button class="btn btn-secondary" onclick="toggleSidebar()">
+            <i data-lucide="menu"></i>
+        </button>
+    </div>
+
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="logo-section">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Kargo Logo" class="site-logo">
+            </div>
+
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">
+                            <i data-lucide="layout-dashboard"></i> Dashboard
+                        </a></li>
+                    <li><a href="/products" class="nav-link {% if 'products' in request.path %}active{% endif %}">
+                            <i data-lucide="package"></i> Products
+                        </a></li>
+                    <li><a href="/customers" class="nav-link {% if 'customers' in request.path %}active{% endif %}">
+                            <i data-lucide="users"></i> Customers
+                        </a></li>
+                    <li><a href="/orders" class="nav-link {% if 'orders' in request.path %}active{% endif %}">
+                            <i data-lucide="shopping-cart"></i> Orders
+                        </a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            console.log('toggle')
+            if (sidebar.style.display === 'flex') {
+                sidebar.style.display = 'none';
+            } else {
+                sidebar.style.display = 'flex';
+            }
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

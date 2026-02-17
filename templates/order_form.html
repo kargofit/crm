@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card">
+    <header style="display: flex; justify-content: space-between; margin-bottom: 2rem;">
+        <h1>New Order / Quotation</h1>
+        <div>
+            <span style="color: var(--text-muted);">Date:</span>
+            <span id="orderDate"></span>
+        </div>
+    </header>
+
+    <form id="orderForm">
+        <!-- Customer Selection -->
+        <div class="form-group">
+            <label>Customer</label>
+            <input list="customerList" id="customerInput" class="form-control" placeholder="Search Customer..."
+                required>
+            <datalist id="customerList"></datalist>
+            <input type="hidden" id="customerId">
+        </div>
+
+        <!-- Order Items -->
+        <div class="table-container" style="margin: 2rem 0;">
+            <table id="itemsTable">
+                <thead>
+                    <tr>
+                        <th style="width: 40%;">Product</th>
+                        <th style="width: 15%;">Quantity</th>
+                        <th style="width: 15%;">Unit Price</th>
+                        <th style="width: 15%;">Tax (18%)</th>
+                        <th style="width: 15%;">Total</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Rows -->
+                </tbody>
+            </table>
+            <button type="button" class="btn btn-secondary" onclick="addItemRow()"
+                style="margin-top: 1rem; width: 100%;">
+                <i data-lucide="plus"></i> Add Item
+            </button>
+        </div>
+
+        <!-- Totals -->
+        <div style="display: flex; justify-content: flex-end;">
+            <div style="width: 300px; text-align: right;">
+                <div style="margin-bottom: 0.5rem; display: flex; justify-content: space-between;">
+                    <span>Subtotal:</span>
+                    <span id="subtotalDisplay">₹0.00</span>
+                </div>
+                <div style="margin-bottom: 0.5rem; display: flex; justify-content: space-between;">
+                    <span>Total Tax (18%):</span>
+                    <span id="taxDisplay">₹0.00</span>
+                </div>
+                <div style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                    <span>Delivery Charges:</span>
+                    <input type="number" id="deliveryCharges" value="0" style="width: 100px; text-align: right;"
+                        onchange="calculateGlobals()">
+                </div>
+                <div
+                    style="border-top: 2px solid var(--border); padding-top: 1rem; font-weight: 700; font-size: 1.25rem; display: flex; justify-content: space-between;">
+                    <span>Grand Total:</span>
+                    <span id="grandTotalDisplay">₹0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+            <a href="/orders" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Create Order</button>
+        </div>
+    </form>
+</div>
+
+<!-- Product Data List (Hidden) -->
+<datalist id="productList"></datalist>
+<!-- Product Map (Hidden JS Object) -->
+<script>
+    let productsMap = {};
+    let customersMap = {};
+
+    document.getElementById('orderDate').innerText = new Date().toLocaleDateString();
+
+    async function init() {
+        // Load Customers
+        const cRes = await fetch('/api/customers');
+        const customers = await cRes.json();
+        const cList = document.getElementById('customerList');
+        customers.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.name; // Display name
+            opt.dataset.id = c.id; // Store ID
+            customersMap[c.name] = c;
+            cList.appendChild(opt);
+        });
+
+        // Load Products
+        const pRes = await fetch('/api/products');
+        const products = await pRes.json();
+        const pList = document.getElementById('productList');
+        products.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = `${p.item_code} - ${p.brand} - ${p.category}`;
+            // We use a complex string for search, but we need to map back to ID
+            // Better to use a custom dropdown but datalist is native and mobile friendly
+            productsMap[`${p.item_code} - ${p.brand} - ${p.category}`] = p;
+            pList.appendChild(opt);
+        });
+
+        // Add first row
+        addItemRow();
+    }
+
+    function addItemRow() {
+        const tbody = document.querySelector('#itemsTable tbody');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>
+                <input list="productList" class="product-input" placeholder="Search Product" onchange="productSelected(this)" required>
+                <input type="hidden" class="product-id">
+            </td>
+            <td>
+                <input type="number" class="qty-input" value="1" min="1" onchange="updateRow(this)" required>
+            </td>
+            <td>
+                <input type="number" class="price-input" step="0.01" readonly style="background: #f1f5f9;">
+            </td>
+            <td class="tax-cell">₹0.00</td>
+            <td class="total-cell">₹0.00</td>
+            <td>
+                <button type="button" class="btn btn-danger" style="padding: 0.25rem;" onclick="removeRow(this)">
+                    <i data-lucide="trash-2" size="16"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+        lucide.createIcons();
+    }
+
+    function removeRow(btn) {
+        btn.closest('tr').remove();
+        calculateGlobals();
+    }
+
+    function productSelected(input) {
+        const product = productsMap[input.value];
+        const row = input.closest('tr');
+
+        if (product) {
+            row.querySelector('.product-id').value = product.id;
+            row.querySelector('.price-input').value = product.sale_price; // Assuming sale price is unit price
+            updateRow(input);
+        } else {
+            // Invalid selection
+            input.setCustomValidity("Please select a valid product");
+        }
+    }
+
+    function updateRow(el) {
+        const row = el.closest('tr');
+        const qty = parseFloat(row.querySelector('.qty-input').value) || 0;
+        const price = parseFloat(row.querySelector('.price-input').value) || 0;
+
+        const sub = qty * price;
+        const tax = sub * 0.18;
+        const total = sub + tax;
+
+        row.querySelector('.tax-cell').innerText = '₹' + tax.toFixed(2);
+        row.querySelector('.total-cell').innerText = '₹' + total.toFixed(2);
+
+        calculateGlobals();
+    }
+
+    function calculateGlobals() {
+        let subtotal = 0;
+        let totalTax = 0;
+
+        document.querySelectorAll('#itemsTable tbody tr').forEach(row => {
+            const qty = parseFloat(row.querySelector('.qty-input').value) || 0;
+            const price = parseFloat(row.querySelector('.price-input').value) || 0;
+            const sub = qty * price;
+
+            subtotal += sub;
+            totalTax += sub * 0.18;
+        });
+
+        const delivery = parseFloat(document.getElementById('deliveryCharges').value) || 0;
+        const grandTotal = subtotal + totalTax + delivery;
+
+        document.getElementById('subtotalDisplay').innerText = '₹' + subtotal.toFixed(2);
+        document.getElementById('taxDisplay').innerText = '₹' + totalTax.toFixed(2);
+        document.getElementById('grandTotalDisplay').innerText = '₹' + grandTotal.toFixed(2);
+    }
+
+    document.getElementById('customerInput').addEventListener('change', function () {
+        const customer = customersMap[this.value];
+        if (customer) {
+            document.getElementById('customerId').value = customer.id;
+            this.setCustomValidity("");
+        } else {
+            document.getElementById('customerId').value = "";
+            // Optional: allow new customer or force selection
+        }
+    });
+
+    document.getElementById('orderForm').onsubmit = async (e) => {
+        e.preventDefault();
+
+        const customerId = document.getElementById('customerId').value;
+        if (!customerId) {
+            alert("Please select a valid customer");
+            return;
+        }
+
+        const items = [];
+        document.querySelectorAll('#itemsTable tbody tr').forEach(row => {
+            const productId = row.querySelector('.product-id').value;
+            if (productId) {
+                const qty = parseFloat(row.querySelector('.qty-input').value);
+                const price = parseFloat(row.querySelector('.price-input').value);
+                const sub = qty * price;
+                const tax = sub * 0.18;
+
+                items.push({
+                    product_id: productId,
+                    quantity: qty,
+                    unit_price: price,
+                    tax_amount: tax,
+                    line_total: sub + tax
+                });
+            }
+        });
+
+        if (items.length === 0) {
+            alert("Please add at least one product");
+            return;
+        }
+
+        const delivery = parseFloat(document.getElementById('deliveryCharges').value) || 0;
+        const total = parseFloat(document.getElementById('grandTotalDisplay').innerText.replace('₹', '')); // crude parsing, better to recalc
+
+        // Proper recalc for total
+        let finalTotal = 0;
+        items.forEach(i => finalTotal += i.line_total);
+        finalTotal += delivery;
+
+        const payload = {
+            customer_id: customerId,
+            delivery_charges: delivery,
+            total_amount: finalTotal,
+            items: items
+        };
+
+        const res = await fetch('/api/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            const json = await res.json();
+            window.location.href = `/orders/${json.id}`; // Go to invoice
+        } else {
+            alert("Error creating order");
+        }
+    };
+
+    init();
+</script>
+{% endblock %}
