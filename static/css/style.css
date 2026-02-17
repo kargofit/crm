@@ -304,14 +304,33 @@ select:focus {
     font-weight: 600;
 }
 
-.badge-draft {
+.badge-draft,
+.status-draft,
+.status-received {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.status-packed {
     background: #fef3c7;
     color: #d97706;
 }
 
+.status-out-for-delivery {
+    background: #e0f2fe;
+    color: #0284c7;
+}
+
+.status-delivered,
 .badge-invoiced {
     background: #dcfce7;
     color: #15803d;
+}
+
+.status-cancelled,
+.status-return {
+    background: #fee2e2;
+    color: #dc2626;
 }
 
 /* SlimSelect Overrides */
@@ -342,4 +361,60 @@ select:focus {
     height: 30px;
     width: auto;
     display: block;
+}
+
+/* Custom Autocomplete for Product Search */
+.autocomplete-container {
+    position: relative;
+    width: 100%;
+}
+
+.search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    z-index: 1000;
+    max-height: 250px;
+    overflow-y: auto;
+    margin-top: 4px;
+}
+
+.search-result-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+    text-align: left;
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-item:hover {
+    background: #f1f5f9;
+}
+
+.search-result-item .item-title {
+    font-weight: 600;
+    color: var(--text-main);
+    display: block;
+    font-size: 0.875rem;
+}
+
+.search-result-item .item-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.search-result-item .item-price {
+    float: right;
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 0.875rem;
 }

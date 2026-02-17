@@ -44,8 +44,8 @@
                 <td>${new Date(o.order_date).toLocaleDateString()}</td>
                 <td>₹${o.total_amount.toFixed(2)}</td>
                 <td>
-                    <span class="badge ${o.status === 'Invoiced' ? 'badge-invoiced' : 'badge-draft'}">
-                        ${o.status}
+                    <span class="badge status-${o.status?.toLowerCase().replace(/ /g, '-')}">
+                        ${o.status || 'Received'}
                     </span>
                 </td>
                 <td>

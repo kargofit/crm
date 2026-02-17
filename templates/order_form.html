@@ -2,22 +2,43 @@
 
 {% block content %}
 <div class="card">
-    <header style="display: flex; justify-content: space-between; margin-bottom: 2rem;">
+    <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
         <h1>New Order / Quotation</h1>
-        <div>
-            <span style="color: var(--text-muted);">Date:</span>
-            <span id="orderDate"></span>
+        <div style="text-align: right;">
+            <div id="saveStatus" style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">Draft
+            </div>
+            <div style="color: var(--text-muted); font-size: 0.875rem;">
+                Date: <span id="orderDate"></span>
+            </div>
         </div>
     </header>
 
     <form id="orderForm">
-        <!-- Customer Selection -->
-        <div class="form-group">
-            <label>Customer</label>
-            <input list="customerList" id="customerInput" class="form-control" placeholder="Search Customer..."
-                required>
-            <datalist id="customerList"></datalist>
-            <input type="hidden" id="customerId">
+        <input type="hidden" id="orderId">
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <!-- Customer Selection -->
+            <div class="form-group">
+                <label>Customer</label>
+                <input list="customerList" id="customerInput" class="form-control" placeholder="Search Customer..."
+                    required onchange="triggerAutoSave()">
+                <datalist id="customerList"></datalist>
+                <input type="hidden" id="customerId">
+            </div>
+
+            <!-- Status Selection -->
+            <div class="form-group">
+                <label>Status</label>
+                <select id="orderStatus" onchange="triggerAutoSave()">
+                    <option value="Draft">Draft</option>
+                    <option value="Received">Received</option>
+                    <option value="Packed">Packed</option>
+                    <option value="Out for Delivery">Out for Delivery</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Cancelled">Cancelled</option>
+                    <option value="Return">Return</option>
+                </select>
+            </div>
         </div>
 
         <!-- Order Items -->
@@ -57,7 +78,7 @@
                 <div style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
                     <span>Delivery Charges:</span>
                     <input type="number" id="deliveryCharges" value="0" style="width: 100px; text-align: right;"
-                        onchange="calculateGlobals()">
+                        onchange="calculateGlobals(); triggerAutoSave()">
                 </div>
                 <div
                     style="border-top: 2px solid var(--border); padding-top: 1rem; font-weight: 700; font-size: 1.25rem; display: flex; justify-content: space-between;">
@@ -74,8 +95,6 @@
     </form>
 </div>
 
-<!-- Product Data List (Hidden) -->
-<datalist id="productList"></datalist>
 <!-- Product Map (Hidden JS Object) -->
 <script>
     let productsMap = {};
@@ -90,23 +109,10 @@
         const cList = document.getElementById('customerList');
         customers.forEach(c => {
             const opt = document.createElement('option');
-            opt.value = c.name; // Display name
-            opt.dataset.id = c.id; // Store ID
+            opt.value = c.name;
+            opt.dataset.id = c.id;
             customersMap[c.name] = c;
             cList.appendChild(opt);
-        });
-
-        // Load Products
-        const pRes = await fetch('/api/products');
-        const products = await pRes.json();
-        const pList = document.getElementById('productList');
-        products.forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = `${p.item_code} - ${p.brand} - ${p.category}`;
-            // We use a complex string for search, but we need to map back to ID
-            // Better to use a custom dropdown but datalist is native and mobile friendly
-            productsMap[`${p.item_code} - ${p.brand} - ${p.category}`] = p;
-            pList.appendChild(opt);
         });
 
         // Add first row
@@ -118,8 +124,12 @@
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>
-                <input list="productList" class="product-input" placeholder="Search Product" onchange="productSelected(this)" required>
-                <input type="hidden" class="product-id">
+                <div class="autocomplete-container">
+                    <input type="text" class="product-input" placeholder="Search Product..." 
+                           oninput="debouncedSearch(this)" autocomplete="off" required>
+                    <div class="search-results" style="display: none;"></div>
+                    <input type="hidden" class="product-id">
+                </div>
             </td>
             <td>
                 <input type="number" class="qty-input" value="1" min="1" onchange="updateRow(this)" required>
@@ -142,21 +152,69 @@
     function removeRow(btn) {
         btn.closest('tr').remove();
         calculateGlobals();
+        triggerAutoSave();
     }
 
-    function productSelected(input) {
-        const product = productsMap[input.value];
-        const row = input.closest('tr');
+    let productSearchTimeout;
+    function debouncedSearch(input) {
+        clearTimeout(productSearchTimeout);
+        const query = input.value.trim();
+        const container = input.closest('.autocomplete-container');
+        const resultsContainer = container.querySelector('.search-results');
 
-        if (product) {
-            row.querySelector('.product-id').value = product.id;
-            row.querySelector('.price-input').value = product.sale_price; // Assuming sale price is unit price
-            updateRow(input);
-        } else {
-            // Invalid selection
-            input.setCustomValidity("Please select a valid product");
+        if (query.length < 2) {
+            resultsContainer.style.display = 'none';
+            return;
+        }
+
+        productSearchTimeout = setTimeout(() => searchProducts(query, input), 300);
+    }
+
+    async function searchProducts(query, input) {
+        const resultsContainer = input.parentElement.querySelector('.search-results');
+        try {
+            const res = await fetch(`/api/products?search=${encodeURIComponent(query)}&per_page=10`);
+            const data = await res.json();
+            const products = data.items || [];
+
+            if (products.length === 0) {
+                resultsContainer.innerHTML = '<div class="search-result-item">No products found</div>';
+            } else {
+                resultsContainer.innerHTML = products.map(p => `
+                    <div class="search-result-item" onclick="selectProduct(this, ${JSON.stringify(p).replace(/"/g, '&quot;')})">
+                        <span class="item-price">₹${p.sale_price}</span>
+                        <span class="item-title">${p.item_name}</span>
+                        <span class="item-meta">${p.brand} | ${p.category} | ${p.item_code}</span>
+                    </div>
+                `).join('');
+            }
+            resultsContainer.style.display = 'block';
+        } catch (e) {
+            console.error("Search error", e);
         }
     }
+
+    window.selectProduct = function (element, product) {
+        const container = element.closest('.autocomplete-container');
+        const input = container.querySelector('.product-input');
+        const row = element.closest('tr');
+
+        input.value = `${product.item_name}`;
+        row.querySelector('.product-id').value = product.id;
+        row.querySelector('.price-input').value = product.sale_price;
+
+        container.querySelector('.search-results').style.display = 'none';
+        updateRow(input);
+        input.setCustomValidity("");
+        triggerAutoSave();
+    }
+
+    // Close results when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('product-input') && !e.target.closest('.search-results')) {
+            document.querySelectorAll('.search-results').forEach(el => el.style.display = 'none');
+        }
+    });
 
     function updateRow(el) {
         const row = el.closest('tr');
@@ -171,6 +229,7 @@
         row.querySelector('.total-cell').innerText = '₹' + total.toFixed(2);
 
         calculateGlobals();
+        triggerAutoSave();
     }
 
     function calculateGlobals() {
@@ -199,18 +258,29 @@
         if (customer) {
             document.getElementById('customerId').value = customer.id;
             this.setCustomValidity("");
+            triggerAutoSave();
         } else {
             document.getElementById('customerId').value = "";
             // Optional: allow new customer or force selection
         }
     });
 
-    document.getElementById('orderForm').onsubmit = async (e) => {
-        e.preventDefault();
+    let autoSaveTimeout;
+    function triggerAutoSave() {
+        const saveStatus = document.getElementById('saveStatus');
+        saveStatus.textContent = 'Saving...';
 
+        clearTimeout(autoSaveTimeout);
+        autoSaveTimeout = setTimeout(saveOrder, 1500);
+    }
+
+    async function saveOrder() {
+        const orderId = document.getElementById('orderId').value;
         const customerId = document.getElementById('customerId').value;
+        const saveStatus = document.getElementById('saveStatus');
+
         if (!customerId) {
-            alert("Please select a valid customer");
+            saveStatus.textContent = 'Waiting for customer...';
             return;
         }
 
@@ -233,13 +303,12 @@
             }
         });
 
-        if (items.length === 0) {
-            alert("Please add at least one product");
+        if (items.length === 0 && !orderId) {
+            saveStatus.textContent = 'Waiting for products...';
             return;
         }
 
         const delivery = parseFloat(document.getElementById('deliveryCharges').value) || 0;
-        const total = parseFloat(document.getElementById('grandTotalDisplay').innerText.replace('₹', '')); // crude parsing, better to recalc
 
         // Proper recalc for total
         let finalTotal = 0;
@@ -250,20 +319,44 @@
             customer_id: customerId,
             delivery_charges: delivery,
             total_amount: finalTotal,
+            status: document.getElementById('orderStatus').value,
             items: items
         };
 
-        const res = await fetch('/api/orders', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+        const method = orderId ? 'PUT' : 'POST';
+        const url = orderId ? `/api/orders/${orderId}` : '/api/orders';
 
-        if (res.ok) {
-            const json = await res.json();
-            window.location.href = `/orders/${json.id}`; // Go to invoice
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                const json = await res.json();
+                if (!orderId && json.id) {
+                    document.getElementById('orderId').value = json.id;
+                    document.querySelector('h1').textContent = `Order #${json.id}`;
+                }
+                saveStatus.textContent = 'Last saved at ' + new Date().toLocaleTimeString();
+            } else {
+                saveStatus.textContent = 'Error saving changes';
+            }
+        } catch (e) {
+            saveStatus.textContent = 'Network error during save';
+        }
+    }
+
+    document.getElementById('orderForm').onsubmit = async (e) => {
+        e.preventDefault();
+        saveStatus.textContent = 'Saving final...';
+        await saveOrder();
+        const orderId = document.getElementById('orderId').value;
+        if (orderId) {
+            window.location.href = `/orders/${orderId}`;
         } else {
-            alert("Error creating order");
+            alert("Error: Order could not be finalized.");
         }
     };
 

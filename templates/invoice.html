@@ -129,7 +129,21 @@
             <h1 style="font-size: 1.5rem; margin-bottom: 0.5rem;">INVOICE</h1>
             <div><strong>Invoice #:</strong> {{ order.id }}</div>
             <div><strong>Date:</strong> {{ order.order_date.strftime('%Y-%m-%d') if order.order_date else 'N/A' }}</div>
-            <div><strong>Status:</strong> {{ order.status }}</div>
+            <div
+                style="margin-top: 0.5rem; display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem;">
+                <strong>Status:</strong>
+                <select id="statusToggle" onchange="updateStatus(this)"
+                    style="padding: 0.25rem; border: 1px solid var(--border); border-radius: 0.25rem;">
+                    <option value="Draft" {% if order.status=='Draft' %}selected{% endif %}>Draft</option>
+                    <option value="Received" {% if order.status=='Received' %}selected{% endif %}>Received</option>
+                    <option value="Packed" {% if order.status=='Packed' %}selected{% endif %}>Packed</option>
+                    <option value="Out for Delivery" {% if order.status=='Out for Delivery' %}selected{% endif %}>Out
+                        for Delivery</option>
+                    <option value="Delivered" {% if order.status=='Delivered' %}selected{% endif %}>Delivered</option>
+                    <option value="Cancelled" {% if order.status=='Cancelled' %}selected{% endif %}>Cancelled</option>
+                    <option value="Return" {% if order.status=='Return' %}selected{% endif %}>Return</option>
+                </select>
+            </div>
         </div>
     </div>
 
@@ -195,6 +209,29 @@
         <button onclick="window.print()" class="btn">Print / PDF</button>
         <a href="/orders" class="btn btn-secondary">Back to Orders</a>
     </div>
+    <script>
+        async function updateStatus(select) {
+            const status = select.value;
+            const orderId = {{ order.id }};
+            
+            try {
+            const res = await fetch(`/api/orders/${orderId}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+
+            if (!res.ok) alert("Error updating status");
+            else {
+                // Visual feedback
+                select.style.borderColor = 'var(--primary)';
+                setTimeout(() => select.style.borderColor = 'var(--border)', 1000);
+            }
+        } catch (e) {
+            alert("Network error");
+        }
+    }
+</script>
 </body>
 
 </html>

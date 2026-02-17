@@ -314,7 +314,7 @@ def handle_orders():
                 order_date=now,
                 delivery_charges=float(data.get('delivery_charges', 0)),
                 total_amount=float(data['total_amount']),
-                status='Draft'
+                status=data.get('status', 'Draft')
             )
             db.session.add(new_order)
             db.session.flush() # flush to get ID
@@ -350,10 +350,42 @@ def handle_orders():
             orders_list.append(o_dict)
         return jsonify(orders_list)
 
-@app.route('/api/orders/<int:id>', methods=['GET'])
-def get_order(id):
+@app.route('/api/orders/<int:id>', methods=['GET', 'PUT'])
+def manage_order(id):
     order = Order.query.get_or_404(id)
     
+    if request.method == 'PUT':
+        data = request.json
+        try:
+            order.customer_id = data.get('customer_id', order.customer_id)
+            order.delivery_charges = float(data.get('delivery_charges', order.delivery_charges))
+            order.total_amount = float(data.get('total_amount', order.total_amount))
+            order.status = data.get('status', order.status)
+            
+            # If items are provided, replace them
+            if 'items' in data:
+                # Remove existing items
+                OrderItem.query.filter_by(order_id=id).delete()
+                
+                # Add new items
+                for item in data['items']:
+                    order_item = OrderItem(
+                        order_id=order.id,
+                        product_id=item['product_id'],
+                        quantity=item['quantity'],
+                        unit_price=float(item['unit_price']),
+                        tax_amount=float(item['tax_amount']),
+                        line_total=float(item['line_total'])
+                    )
+                    db.session.add(order_item)
+            
+            db.session.commit()
+            return jsonify({'id': order.id, 'message': 'Order updated successfully'})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': str(e)}), 400
+
+    # GET logic
     order_dict = {
         'id': order.id, 'customer_id': order.customer_id, 'order_date': order.order_date,
         'delivery_charges': order.delivery_charges, 'total_amount': order.total_amount, 'status': order.status,
@@ -371,7 +403,8 @@ def get_order(id):
             'tax_amount': item.tax_amount, 'line_total': item.line_total,
             'item_code': item.product.item_code if item.product else None,
             'brand': item.product.brand if item.product else None,
-            'pack_size': item.product.pack_size if item.product else None
+            'pack_size': item.product.pack_size if item.product else None,
+            'item_name': item.product.item_name if item.product else None
         }
         items_list.append(i_dict)
     
