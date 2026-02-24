@@ -54,6 +54,7 @@ class Customer(db.Model):
 class Order(db.Model):
     __tablename__ = 'orders'
     id = db.Column(db.Integer, primary_key=True)
+    invoice_number = db.Column(db.String, unique=True, nullable=True)
     customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'))
     order_date = db.Column(db.String)
     delivery_charges = db.Column(db.Float, default=0)

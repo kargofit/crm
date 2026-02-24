@@ -49,13 +49,42 @@
                     </span>
                 </td>
                 <td>
-                    <a href="/orders/${o.id}" class="btn btn-secondary" style="padding: 0.25rem 0.5rem;">
-                        <i data-lucide="eye" size="16"></i> View
-                    </a>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <a href="/orders/${o.id}" class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" title="View Invoice">
+                            <i data-lucide="eye" size="16"></i>
+                        </a>
+                        <a href="/orders/${o.id}/edit" class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" title="Edit Order">
+                            <i data-lucide="edit-2" size="16"></i>
+                        </a>
+                        <button onclick="cancelOrder(${o.id})" class="btn btn-danger" style="padding: 0.25rem 0.5rem;" title="Cancel Order">
+                            <i data-lucide="x-circle" size="16"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `).join('');
         lucide.createIcons();
+    }
+
+    async function cancelOrder(id) {
+        if (!confirm('Are you sure you want to cancel this order?')) return;
+
+        try {
+            const res = await fetch(`/api/orders/${id}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'Cancelled' })
+            });
+
+            if (res.ok) {
+                loadOrders();
+            } else {
+                alert('Error cancelling order');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Network error');
+        }
     }
     loadOrders();
 </script>

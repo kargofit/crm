@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from flask_migrate import Migrate
 import json
+import random
 from datetime import datetime
 from config import DB_URL
 from models import db, Product, Customer, Order, OrderItem, Bike
@@ -301,15 +302,23 @@ def manage_customer(id):
         return jsonify({'message': 'Customer updated'})
 
 # Order API
+def generate_invoice_number():
+    now = datetime.now()
+    return f"INV{now.year}{now.month:02d}{now.day:02d}{random.randint(1000, 9999)}"
+
 @app.route('/api/orders', methods=['GET', 'POST'])
 def handle_orders():
     if request.method == 'POST':
         data = request.json
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
+        if not data.get('customer_id'):
+            return jsonify({'error': 'Customer is mandatory'}), 400
+            
         try:
             # Create Order
             new_order = Order(
+                invoice_number=generate_invoice_number(),
                 customer_id=data['customer_id'],
                 order_date=now,
                 delivery_charges=float(data.get('delivery_charges', 0)),
@@ -343,7 +352,7 @@ def handle_orders():
         orders_list = []
         for o in orders:
             o_dict = {
-                'id': o.id, 'customer_id': o.customer_id, 'order_date': o.order_date,
+                'id': o.id, 'invoice_number': o.invoice_number, 'customer_id': o.customer_id, 'order_date': o.order_date,
                 'delivery_charges': o.delivery_charges, 'total_amount': o.total_amount, 'status': o.status,
                 'customer_name': o.customer.name if o.customer else None
             }
@@ -356,6 +365,9 @@ def manage_order(id):
     
     if request.method == 'PUT':
         data = request.json
+        if 'customer_id' in data and not data.get('customer_id'):
+            return jsonify({'error': 'Customer is mandatory'}), 400
+            
         try:
             order.customer_id = data.get('customer_id', order.customer_id)
             order.delivery_charges = float(data.get('delivery_charges', order.delivery_charges))
@@ -387,7 +399,7 @@ def manage_order(id):
 
     # GET logic
     order_dict = {
-        'id': order.id, 'customer_id': order.customer_id, 'order_date': order.order_date,
+        'id': order.id, 'invoice_number': order.invoice_number, 'customer_id': order.customer_id, 'order_date': order.order_date,
         'delivery_charges': order.delivery_charges, 'total_amount': order.total_amount, 'status': order.status,
         'customer_name': order.customer.name if order.customer else None,
         'phone': order.customer.phone if order.customer else None,
@@ -723,7 +735,11 @@ def orders_page():
 
 @app.route('/orders/create')
 def create_order_page():
-    return render_template('order_form.html')
+    return render_template('order_form.html', order_id=None)
+
+@app.route('/orders/<int:id>/edit')
+def edit_order_page(id):
+    return render_template('order_form.html', order_id=id)
 
 @app.route('/orders/<int:id>')
 def view_order_page(id):
@@ -731,7 +747,7 @@ def view_order_page(id):
     
     # Prepare order dict manually to match template expectations
     order_data = {
-         'id': order.id, 'customer_id': order.customer_id, 'order_date': order.order_date,
+         'id': order.id, 'invoice_number': order.invoice_number, 'customer_id': order.customer_id, 'order_date': order.order_date,
          'delivery_charges': order.delivery_charges, 'total_amount': order.total_amount, 'status': order.status,
          'name': order.customer.name if order.customer else '',
          'phone': order.customer.phone if order.customer else '',

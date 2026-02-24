@@ -14,7 +14,7 @@
     </header>
 
     <form id="orderForm">
-        <input type="hidden" id="orderId">
+        <input type="hidden" id="orderId" value="{{ order_id or '' }}">
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <!-- Customer Selection -->
@@ -89,8 +89,9 @@
         </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
-            <a href="/orders" class="btn btn-secondary">Cancel</a>
-            <button type="submit" class="btn btn-primary">Create Order</button>
+            <a href="/orders" class="btn btn-secondary">Back</a>
+            <button type="submit" class="btn btn-primary" id="saveButton">{{ 'Update Order' if order_id else 'Create
+                Order' }}</button>
         </div>
     </form>
 </div>
@@ -115,27 +116,60 @@
             cList.appendChild(opt);
         });
 
-        // Add first row
-        addItemRow();
+        // Add first row if new order
+        const existingOrderId = document.getElementById('orderId').value;
+        if (existingOrderId) {
+            await loadOrderForEdit(existingOrderId);
+        } else {
+            addItemRow();
+        }
     }
 
-    function addItemRow() {
+    async function loadOrderForEdit(id) {
+        try {
+            const res = await fetch(`/api/orders/${id}`);
+            const order = await res.json();
+
+            document.getElementById('customerId').value = order.customer_id;
+            document.getElementById('customerInput').value = order.customer_name;
+            document.getElementById('orderStatus').value = order.status;
+            document.getElementById('deliveryCharges').value = order.delivery_charges;
+            document.getElementById('orderDate').innerText = new Date(order.order_date).toLocaleDateString();
+            document.querySelector('h1').textContent = `Edit Order #${order.id}`;
+
+            const tbody = document.querySelector('#itemsTable tbody');
+            tbody.innerHTML = '';
+
+            order.items.forEach(item => {
+                addItemRow(item);
+            });
+
+            calculateGlobals();
+        } catch (e) {
+            console.error("Error loading order", e);
+            alert("Error loading order data");
+        }
+    }
+
+    function addItemRow(item = null) {
         const tbody = document.querySelector('#itemsTable tbody');
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>
                 <div class="autocomplete-container">
                     <input type="text" class="product-input" placeholder="Search Product..." 
-                           oninput="debouncedSearch(this)" autocomplete="off" required>
+                           oninput="debouncedSearch(this)" autocomplete="off" required
+                           value="${item ? item.item_name : ''}">
                     <div class="search-results" style="display: none;"></div>
-                    <input type="hidden" class="product-id">
+                    <input type="hidden" class="product-id" value="${item ? item.product_id : ''}">
                 </div>
             </td>
             <td>
-                <input type="number" class="qty-input" value="1" min="1" onchange="updateRow(this)" required>
+                <input type="number" class="qty-input" value="${item ? item.quantity : 1}" min="1" onchange="updateRow(this)" required>
             </td>
             <td>
-                <input type="number" class="price-input" step="0.01" readonly style="background: #f1f5f9;">
+                <input type="number" class="price-input" step="0.01" readonly style="background: #f1f5f9;" 
+                       value="${item ? item.unit_price : ''}">
             </td>
             <td class="tax-cell">₹0.00</td>
             <td class="total-cell">₹0.00</td>
@@ -147,6 +181,7 @@
         `;
         tbody.appendChild(tr);
         lucide.createIcons();
+        if (item) updateRow(tr.querySelector('.qty-input'));
     }
 
     function removeRow(btn) {
@@ -350,13 +385,22 @@
 
     document.getElementById('orderForm').onsubmit = async (e) => {
         e.preventDefault();
+
+        const customerId = document.getElementById('customerId').value;
+        if (!customerId) {
+            alert("Please select a customer before creating the order.");
+            document.getElementById('customerInput').focus();
+            return;
+        }
+
         saveStatus.textContent = 'Saving final...';
         await saveOrder();
+
         const orderId = document.getElementById('orderId').value;
         if (orderId) {
             window.location.href = `/orders/${orderId}`;
         } else {
-            alert("Error: Order could not be finalized.");
+            alert("Error: Order could not be finalized. Please ensure you have added products.");
         }
     };
 
